@@ -14,7 +14,16 @@ pipeline {
         stage("Build") {
             steps {
                 echo "This is the Build stage"
-                sh "docker-compose build"
+                sh '''
+                # Download docker-compose if not found
+                if ! command -v docker-compose &> /dev/null; then
+                    curl -SL https://github.com/docker/compose/releases/download/v2.29.2/docker-compose-linux-x86_64 -o docker-compose
+                    chmod +x docker-compose
+                    ./docker-compose build
+                else
+                    docker-compose build
+                fi
+                '''
             }
         }
 
@@ -27,7 +36,13 @@ pipeline {
         stage("Deploy") {
             steps {
                 echo "This is the Deploy stage"
-                sh "docker-compose up -d"
+                sh '''
+                if [ -f "./docker-compose" ]; then
+                    ./docker-compose up -d
+                else
+                    docker-compose up -d
+                fi
+                '''
             }
         }
     }
